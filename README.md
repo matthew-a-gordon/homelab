@@ -329,6 +329,96 @@ docker-compose logs qbittorrent
 # - Torrent trackers (via qBittorrent)
 ```
 
+## GPU Hardware Transcoding
+
+Jellyfin supports GPU-accelerated transcoding for improved performance and reduced CPU usage.
+
+### Supported Hardware
+
+**NVIDIA GPUs (NVENC)**
+- GTX 1050+ or RTX series recommended
+- Excellent 4K transcoding performance
+- Supports H.264, H.265/HEVC, and AV1 encoding
+
+**Intel GPUs (QuickSync)**
+- 7th generation Intel processors and newer
+- Built-in iGPU acceleration
+- Good compatibility and efficiency
+
+**AMD GPUs (AMF/VAAPI)**
+- RX 400 series and newer
+- Uses VAAPI interface on Linux
+
+### NVIDIA Setup (Pre-configured)
+
+The docker-compose.yml is already configured for NVIDIA GPU access. To enable:
+
+1. **Install NVIDIA Container Toolkit** (if not already done):
+   ```bash
+   # Add NVIDIA repository
+   curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+
+   # Install toolkit
+   sudo dnf install nvidia-container-toolkit
+
+   # Configure Docker
+   sudo nvidia-ctk runtime configure --runtime=docker
+   sudo systemctl restart docker
+   ```
+
+2. **Test GPU Access**:
+   ```bash
+   # Verify NVIDIA container access works
+   docker run --rm --gpus all nvidia/cuda:13.0.1-cudnn-runtime-ubuntu24.04 nvidia-smi
+
+   # Start Jellyfin with GPU support
+   docker-compose up -d jellyfin
+
+   # Verify GPU access in Jellyfin container
+   docker exec jellyfin nvidia-smi
+   ```
+
+3. **Configure Jellyfin Hardware Acceleration**:
+   - Access Jellyfin Dashboard → Playback
+   - **Hardware acceleration**: Select `NVIDIA NVENC`
+   - **Enable hardware decoding**: For supported formats
+   - **Enable hardware encoding**: Select codecs to accelerate:
+     - **H.264**: Enable (broad device compatibility)
+     - **HEVC/H.265**: Enable (better compression, 4K content)
+     - **AV1**: Enable if needed (latest efficiency standard)
+
+### Performance Benefits
+
+**With Hardware Transcoding:**
+- **4K Transcoding**: Multiple simultaneous 4K → 1080p streams
+- **CPU Usage**: Dramatically reduced (from 80%+ to under 10%)
+- **Power Efficiency**: GPU transcoding uses less power than CPU
+- **Stream Capacity**: Handle 10+ concurrent transcoded streams
+- **Quality**: Hardware encoders optimized for real-time encoding
+
+**Transcoding Scenarios:**
+- **Remote Streaming**: Reduce bitrate for mobile/limited bandwidth
+- **Device Compatibility**: Convert formats for older devices
+- **Multiple Users**: Serve different quality streams simultaneously
+- **Storage Optimization**: Real-time conversion from high-quality source files
+
+### Troubleshooting GPU Transcoding
+
+**Check GPU Usage During Transcoding:**
+```bash
+# Monitor GPU utilization
+nvidia-smi -l 1
+
+# Check Jellyfin logs for hardware acceleration
+docker logs jellyfin | grep -i "hardware\|nvenc\|cuda"
+```
+
+**Common Issues:**
+- **No GPU detected**: Ensure NVIDIA Container Toolkit is properly installed
+- **Transcoding still uses CPU**: Verify hardware acceleration is enabled in Jellyfin settings
+- **Poor quality**: Adjust encoding settings in Jellyfin playback configuration
+- **Container startup fails**: Check Docker daemon configuration for NVIDIA runtime
+
 ## Security Features
 
 - **VPN Kill Switch**: Downloads stop if VPN connection fails
