@@ -103,8 +103,25 @@ The stack uses selective VPN routing - only download clients use the VPN while m
    # Copy environment template
    cp .env.example .env
 
-   # Edit .env with your NordVPN credentials and timezone
+   # Edit .env with your timezone (credentials stored separately for security)
    nano .env
+   ```
+
+   **Secure Credential Setup:**
+   ```bash
+   # Create secure directory for credentials
+   sudo mkdir -p /etc/docker/secrets
+
+   # Store NordVPN credentials securely (replace with your actual credentials)
+   echo "your_nordvpn_username" | sudo tee /etc/docker/secrets/nordvpn_user
+   echo "your_nordvpn_password" | sudo tee /etc/docker/secrets/nordvpn_pass
+
+   # Set secure permissions (only root can read)
+   sudo chmod 600 /etc/docker/secrets/nordvpn_*
+   sudo chown root:root /etc/docker/secrets/nordvpn_*
+
+   # Verify files are created correctly
+   sudo ls -la /etc/docker/secrets/
    ```
 
 3. **Deploy Stack**
@@ -421,10 +438,49 @@ docker logs jellyfin | grep -i "hardware\|nvenc\|cuda"
 
 ## Security Features
 
+### Network Security
 - **VPN Kill Switch**: Downloads stop if VPN connection fails
 - **DNS Leak Prevention**: All download traffic uses VPN DNS
 - **Network Isolation**: Download clients cannot bypass VPN
 - **Local Management**: Admin interfaces remain locally accessible
+
+### Credential Security
+This setup implements secure credential storage following security best practices:
+
+**What We Avoid:**
+- ❌ Plain-text passwords in `.env` files
+- ❌ Credentials in version control
+- ❌ World-readable credential files
+- ❌ Credentials in container environment variables
+
+**Security Implementation:**
+- ✅ Credentials stored in `/etc/docker/secrets/` (root-only access)
+- ✅ File-based authentication (not environment variables)
+- ✅ Secure file permissions (600, root:root)
+- ✅ Credentials isolated from application code
+
+**File Locations:**
+```
+/etc/docker/secrets/
+├── nordvpn_user    (600, root:root)
+└── nordvpn_pass    (600, root:root)
+```
+
+**Rotation Procedure:**
+```bash
+# Update credentials securely
+echo "new_username" | sudo tee /etc/docker/secrets/nordvpn_user
+echo "new_password" | sudo tee /etc/docker/secrets/nordvpn_pass
+
+# Restart VPN container to use new credentials
+docker-compose restart gluetun
+```
+
+**Backup Security:**
+When backing up the system, ensure credential files are:
+- Either excluded from backups, or
+- Encrypted with strong encryption if included
+- Never stored in plain text on backup media
 
 ## Common Commands
 

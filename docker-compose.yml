@@ -18,11 +18,13 @@ services:
       - "9696:9696"   # Prowlarr WebUI
     volumes:
       - /data/arr/config/gluetun:/gluetun
+      - /etc/docker/secrets/nordvpn_user:/tmp/nordvpn_user:ro
+      - /etc/docker/secrets/nordvpn_pass:/tmp/nordvpn_pass:ro
     environment:
       - VPN_SERVICE_PROVIDER=nordvpn
       - VPN_TYPE=openvpn
-      - NORDVPN_USER=${NORDVPN_USER}
-      - NORDVPN_PASSWORD=${NORDVPN_PASSWORD}
+      - NORDVPN_USER_FILE=/tmp/nordvpn_user
+      - NORDVPN_PASSWORD_FILE=/tmp/nordvpn_pass
       - SERVER_COUNTRIES=United States
       - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/16,172.16.0.0/12,10.0.0.0/8
       - TZ=${TZ}
