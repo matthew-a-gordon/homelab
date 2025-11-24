@@ -7,7 +7,7 @@ A Docker-based *arr stack for automated media downloading and management with se
 This setup provides:
 - **Automated Content Discovery**: TV shows, movies, and books via Sonarr/Radarr/Readarr
 - **Secure Downloads**: All BitTorrent/Usenet traffic routed through NordVPN
-- **Media Streaming**: Jellyfin accessible locally and remotely
+- **Media Streaming**: Plex accessible locally and remotely
 - **Dynamic IP Support**: Works with Comcast cable internet (no static IP required)
 
 ## Architecture
@@ -17,12 +17,12 @@ This setup provides:
 The stack uses selective VPN routing - only download clients use the VPN while media streaming and management remain on the bridge network:
 
 ```
-┌─ Bridge Network (arr_network) ────────────┐
-│  ├─ Jellyfin (8096) - Media Server       │
+┌─ Host/Bridge Network ─────────────────────┐
+│  ├─ Plex (32400) - Media Server          │
 │  ├─ Sonarr (8989) - TV Management        │
 │  ├─ Radarr (7878) - Movie Management     │
 │  ├─ Readarr (8787) - Book Management     │
-│  └─ Jellyseerr (5055) - Requests         │
+│  └─ Overseerr (5055) - Requests          │
 └────────────────────────────────────────────┘
 
 ┌─ VPN Network (via Gluetun) ───────────────┐
@@ -35,12 +35,12 @@ The stack uses selective VPN routing - only download clients use the VPN while m
 
 ### Services
 
-**Media Management (Bridge Network)**
-- **Jellyfin**: Media server with local and remote access
+**Media Management (Host/Bridge Network)**
+- **Plex**: Media server with local and remote access
 - **Sonarr**: Automatic TV show downloading and organization
 - **Radarr**: Automatic movie downloading and organization
 - **Readarr**: Automatic book downloading and organization
-- **Jellyseerr**: User-friendly request interface (optional)
+- **Overseerr**: User-friendly request interface (optional)
 
 **Download Services (VPN Network)**
 - **Gluetun**: NordVPN client providing secure tunnel
@@ -60,8 +60,8 @@ The stack uses selective VPN routing - only download clients use the VPN while m
 │  ├─ sonarr/
 │  ├─ radarr/
 │  ├─ readarr/
-│  ├─ jellyfin/
-│  └─ jellyseerr/
+│  ├─ plex/
+│  └─ overseerr/
 ├─ downloads/
 │  ├─ incomplete/     # Active downloads
 │  ├─ complete/       # Finished downloads
@@ -80,9 +80,15 @@ The stack uses selective VPN routing - only download clients use the VPN while m
 
 ### Recommended: Tailscale
 - Install Tailscale on your server and devices
-- Access Jellyfin via `http://tailscale-device-ip:8096`
+- Access Plex via `http://tailscale-device-ip:32400/web`
 - No router configuration needed
 - Handles dynamic IP automatically
+
+### Built-in: Plex Remote Access
+- Plex includes built-in remote access functionality
+- Automatically handles port forwarding via UPnP
+- Plex Relay provides fallback access even without direct connection
+- Configure in Plex Settings → Remote Access
 
 ### Alternative: Cloudflare Tunnel
 - Zero-trust access without open ports
@@ -103,7 +109,7 @@ The stack uses selective VPN routing - only download clients use the VPN while m
    cd arr
 
    # Create directory structure (if not already done)
-   mkdir -p /data/arr/{config/{gluetun,qbittorrent,sabnzbd,prowlarr,sonarr,radarr,readarr,jellyfin,jellyseerr},downloads/{incomplete,complete/{movies,tv,books},watch},media/{movies,tv,books},logs}
+   mkdir -p /data/arr/{config/{gluetun,qbittorrent,sabnzbd,prowlarr,sonarr,radarr,readarr,plex,overseerr},downloads/{incomplete,complete/{movies,tv,books},watch},media/{movies,tv,books},logs}
 
    # Copy environment template
    cp .env.example .env
@@ -143,11 +149,11 @@ The stack uses selective VPN routing - only download clients use the VPN while m
    - Access Sonarr at `http://localhost:8989`
    - Access Radarr at `http://localhost:7878`
    - Access Readarr at `http://localhost:8787`
-   - Access Jellyfin at `http://localhost:8096`
+   - Access Plex at `http://localhost:32400/web`
    - Access qBittorrent at `http://localhost:8080` (default: admin/adminadmin)
    - Access SABnzbd at `http://localhost:8085`
    - Access Prowlarr at `http://localhost:9696`
-   - Access Jellyseerr at `http://localhost:5055` (optional)
+   - Access Overseerr at `http://localhost:5055` (optional)
 
 ## Usenet Configuration
 
@@ -270,12 +276,12 @@ Access Readarr at `http://localhost:8787`:
 
 Once configured, the complete automation workflow is:
 
-1. **Request**: Add TV show in Sonarr, movie in Radarr, or book in Readarr (or via Jellyseerr)
+1. **Request**: Add TV show in Sonarr, movie in Radarr, or book in Readarr (or via Overseerr)
 2. **Search**: Sonarr/Radarr/Readarr automatically search indexers via Prowlarr
 3. **Download**: Best match sent to SABnzbd for downloading via VPN
 4. **Extract**: SABnzbd downloads and extracts to `/downloads/complete/`
 5. **Import**: Sonarr/Radarr/Readarr automatically move/rename to organized library
-6. **Serve**: Jellyfin immediately sees new content in `/media/`
+6. **Serve**: Plex immediately sees new content in `/media/`
 
 ### Testing the Setup
 
@@ -374,7 +380,7 @@ docker-compose logs qbittorrent
 
 ## GPU Hardware Transcoding
 
-Jellyfin supports GPU-accelerated transcoding for improved performance and reduced CPU usage.
+Plex supports GPU-accelerated transcoding for improved performance and reduced CPU usage (requires Plex Pass for hardware transcoding).
 
 ### Supported Hardware
 
@@ -414,21 +420,19 @@ The docker-compose.yml is already configured for NVIDIA GPU access. To enable:
    # Verify NVIDIA container access works
    docker run --rm --gpus all nvidia/cuda:13.0.1-cudnn-runtime-ubuntu24.04 nvidia-smi
 
-   # Start Jellyfin with GPU support
-   docker-compose up -d jellyfin
+   # Start Plex with GPU support
+   docker-compose up -d plex
 
-   # Verify GPU access in Jellyfin container
-   docker exec jellyfin nvidia-smi
+   # Verify GPU access in Plex container
+   docker exec plex nvidia-smi
    ```
 
-3. **Configure Jellyfin Hardware Acceleration**:
-   - Access Jellyfin Dashboard → Playback
-   - **Hardware acceleration**: Select `NVIDIA NVENC`
-   - **Enable hardware decoding**: For supported formats
-   - **Enable hardware encoding**: Select codecs to accelerate:
-     - **H.264**: Enable (broad device compatibility)
-     - **HEVC/H.265**: Enable (better compression, 4K content)
-     - **AV1**: Enable if needed (latest efficiency standard)
+3. **Configure Plex Hardware Acceleration** (Plex Pass required):
+   - Access Plex Settings → Transcoder
+   - **Use hardware acceleration when available**: Enable
+   - **Use hardware-accelerated video encoding**: Enable
+   - Plex will automatically detect and use NVIDIA NVENC
+   - Supports H.264, HEVC/H.265 hardware transcoding
 
 ### Performance Benefits
 
@@ -452,14 +456,14 @@ The docker-compose.yml is already configured for NVIDIA GPU access. To enable:
 # Monitor GPU utilization
 nvidia-smi -l 1
 
-# Check Jellyfin logs for hardware acceleration
-docker logs jellyfin | grep -i "hardware\|nvenc\|cuda"
+# Check Plex logs for hardware acceleration
+docker logs plex | grep -i "hardware\|nvenc\|transcode"
 ```
 
 **Common Issues:**
 - **No GPU detected**: Ensure NVIDIA Container Toolkit is properly installed
-- **Transcoding still uses CPU**: Verify hardware acceleration is enabled in Jellyfin settings
-- **Poor quality**: Adjust encoding settings in Jellyfin playback configuration
+- **Transcoding still uses CPU**: Verify hardware acceleration is enabled in Plex settings (requires Plex Pass)
+- **Poor quality**: Adjust encoding settings in Plex transcoder configuration
 - **Container startup fails**: Check Docker daemon configuration for NVIDIA runtime
 
 ## Security Features
@@ -469,6 +473,11 @@ docker logs jellyfin | grep -i "hardware\|nvenc\|cuda"
 - **DNS Leak Prevention**: All download traffic uses VPN DNS
 - **Network Isolation**: Download clients cannot bypass VPN
 - **Local Management**: Admin interfaces remain locally accessible
+
+### Plex-Specific Features
+- **Plex Remote Access**: Built-in secure remote access without VPN
+- **Plex Relay**: Fallback connection method when direct access unavailable
+- **Network Discovery**: Auto-discovery on local network for easy client connection
 
 ### Credential Security
 This setup uses **NordVPN Service Credentials** instead of your main account login for improved security:
@@ -536,7 +545,7 @@ docker-compose down
 - **Download Clients**: Configure Sonarr/Radarr to connect to download clients via their container names
 - **Storage Paths**: Use `/data/downloads` and `/data/media` as configured in docker-compose
 - **VPN Selection**: Gluetun automatically selects optimal NordVPN server
-- **Port Access**: Only Jellyfin needs external access for remote streaming
+- **Port Access**: Plex handles external access automatically via Remote Access or Plex Relay
 
 ## Troubleshooting
 

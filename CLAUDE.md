@@ -6,25 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This project builds and maintains a Docker-based *arr stack configuration for automated media management. The stack includes:
 
-- **Media Management**: Sonarr (TV shows), Radarr (movies), and other *arr applications
+- **Media Management**: Sonarr (TV shows), Radarr (movies), Readarr (books), and other *arr applications
 - **Download Clients**: Configured to work with BitTorrent and Usenet over NordVPN
-- **Media Server**: Jellyfin exposed to internal network and secure remote access
+- **Media Server**: Plex exposed to internal network with built-in remote access
 - **Network Security**: All torrenting/usenet traffic routed through NordVPN
-- **Remote Access**: OpenVPN or similar for secure external access to Jellyfin
+- **Remote Access**: Plex built-in remote access, or Tailscale for secure external access
 
 ## Architecture Requirements
 
 ### Network Configuration
 - **VPN Routing**: All BitTorrent/Usenet traffic must route through NordVPN
-- **Local Network**: Jellyfin accessible on internal network without VPN
-- **Remote Access**: Secure tunnel (OpenVPN/WireGuard) for external Jellyfin access
+- **Local Network**: Plex accessible on internal network (using host network mode for auto-discovery)
+- **Remote Access**: Plex built-in remote access with automatic NAT traversal and Plex Relay fallback
 - **Dynamic IP**: Configuration must handle dynamic IP addresses (no static IP/DNS)
 
 ### Service Stack
 - **Search Agents**: Prowlarr for indexer management
-- **Content Management**: Sonarr (TV), Radarr (movies)
+- **Content Management**: Sonarr (TV), Radarr (movies), Readarr (books)
 - **Download Clients**: qBittorrent, SABnzbd (VPN-routed)
-- **Media Server**: Jellyfin (local + secure remote)
+- **Media Server**: Plex (local + built-in remote access)
+- **Request Management**: Overseerr for user requests
 - **VPN Client**: NordVPN integration for download clients
 
 ## Development Commands

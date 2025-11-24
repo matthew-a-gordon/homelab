@@ -122,21 +122,20 @@ services:
       - /data/arr/media/books:/books
 
   # Media Server
-  jellyfin:
-    image: lscr.io/linuxserver/jellyfin:latest
-    container_name: jellyfin
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
     restart: unless-stopped
-    ports:
-      - "8096:8096"
-      - "8920:8920"   # HTTPS
+    network_mode: host
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=${TZ}
+      - VERSION=docker
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
     volumes:
-      - /data/arr/config/jellyfin:/config
+      - /data/arr/config/plex:/config
       - /data/arr/media:/data
     devices:
       - /dev/dri:/dev/dri  # Intel/AMD hardware acceleration fallback
@@ -148,10 +147,10 @@ services:
               count: 1
               capabilities: [gpu]
 
-  # Request Management - Optional
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
+  # Request Management
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
     restart: unless-stopped
     ports:
       - "5055:5055"
@@ -160,7 +159,48 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /data/arr/config/jellyseerr:/app/config
+      - /data/arr/config/overseerr:/config
+
+  ## JELLYFIN BACKUP (commented out - switch back if needed)
+  # jellyfin:
+  #   image: lscr.io/linuxserver/jellyfin:latest
+  #   container_name: jellyfin
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8096:8096"
+  #     - "8920:8920"   # HTTPS
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TZ}
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #     - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+  #   volumes:
+  #     - /data/arr/config/jellyfin:/config
+  #     - /data/arr/media:/data
+  #   devices:
+  #     - /dev/dri:/dev/dri  # Intel/AMD hardware acceleration fallback
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+  ## JELLYSEERR BACKUP (commented out - switch back if needed)
+  # jellyseerr:
+  #   image: fallenbagel/jellyseerr:latest
+  #   container_name: jellyseerr
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5055:5055"
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - /data/arr/config/jellyseerr:/app/config
 
 networks:
   default:
