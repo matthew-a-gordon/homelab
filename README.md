@@ -1,6 +1,6 @@
-# Arr Stack - Automated Media Management
+# Homelab - Automated Media Management
 
-A Docker-based *arr stack for automated media downloading and management with secure VPN routing and remote access.
+A Docker-based homelab setup for automated media downloading and management with secure VPN routing and remote access.
 
 ## Overview
 
@@ -106,7 +106,7 @@ The stack uses selective VPN routing - only download clients use the VPN while m
    ```bash
    # Clone repository
    git clone <this-repo>
-   cd arr
+   cd homelab
 
    # Create directory structure (if not already done)
    mkdir -p /data/arr/{config/{gluetun,qbittorrent,sabnzbd,prowlarr,sonarr,radarr,readarr,plex,overseerr},downloads/{incomplete,complete/{movies,tv,books},watch},media/{movies,tv,books},logs}
