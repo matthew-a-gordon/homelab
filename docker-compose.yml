@@ -105,22 +105,6 @@ services:
       - /data/arr/downloads:/downloads
       - /data/arr/media/movies:/movies
 
-  # Book Management
-  readarr:
-    image: ghcr.io/hotio/readarr:latest
-    container_name: readarr
-    restart: unless-stopped
-    ports:
-      - "8787:8787"
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=${TZ}
-    volumes:
-      - /data/arr/config/readarr:/config
-      - /data/arr/downloads:/downloads
-      - /data/arr/media/books:/books
-
   # Media Server
   plex:
     image: lscr.io/linuxserver/plex:latest
