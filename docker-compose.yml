@@ -13,7 +13,6 @@ services:
       - "6881:6881"   # qBittorrent incoming connections
       - "6881:6881/udp"
       - "8085:8085"   # SABnzbd WebUI
-      - "9696:9696"   # Prowlarr WebUI
     volumes:
       - /data/arr/config/gluetun:/gluetun
     environment:
@@ -58,14 +57,13 @@ services:
       - /data/arr/config/sabnzbd:/config
       - /data/arr/downloads:/downloads
 
-  # Indexer Management (via VPN)
+  # Indexer Management
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
     restart: unless-stopped
-    network_mode: "service:gluetun"
-    depends_on:
-      - gluetun
+    ports:
+      - "9696:9696"
     environment:
       - PUID=1000
       - PGID=1000
@@ -136,6 +134,8 @@ services:
     image: ghcr.io/seerr-team/seerr:latest
     container_name: seerr
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5055:5055"
     environment:
