@@ -17,9 +17,8 @@ services:
       - /data/arr/config/gluetun:/gluetun
     environment:
       - VPN_SERVICE_PROVIDER=nordvpn
-      - VPN_TYPE=openvpn
-      - OPENVPN_USER=${NORDVPN_SERVICE_USER}
-      - OPENVPN_PASSWORD=${NORDVPN_SERVICE_PASS}
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
       - SERVER_COUNTRIES=United States
       - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/16,172.16.0.0/12,10.0.0.0/8
       - TZ=${TZ}
